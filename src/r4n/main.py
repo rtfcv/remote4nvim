@@ -1,12 +1,15 @@
 import psutil
 import json
-import subprocess
 
 import os
 import os.path
 import tempfile
 
 import argparse
+import logging
+import sys
+
+LOG = logging.getLogger('remote4nvimLogger')
 
 
 def r4n(args):
@@ -31,7 +34,7 @@ def r4n(args):
         myServ = nvimProc['server']
     except BaseException as e:
         # the keys that should have existed did not for some reason
-        print(e.__class__.__name__, ': ', e)
+        LOG.warn(f'{e.__class__.__name__} : {e}')
         # reset the process info dict
         nvimProc = {}
 
@@ -39,7 +42,7 @@ def r4n(args):
     if (myPid is not None) and psutil.pid_exists(myPid):
         # server address was retrieved and PID was alive
         myProc = psutil.Process(myPid)
-        print('running: ', myProc.cmdline())
+        LOG.info(f'running: {myProc.cmdline()}')
         newProc = psutil.Popen(['nvim', '--server', myServ, '--remote', *(args.files)])
     else:
         # either myPid is None or process is dead
@@ -72,20 +75,32 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--server',
-        help='server func'
+        help='NOT IMPLEMENTED: server func'
+    )
+    parser.add_argument(
+        '--debug',
+        help='DO NOT USE. Print debug info.',
+        action='store_true'
     )
 
     parser.add_argument(
         'files', nargs='*', type=str,
-        help='Project IDs from [modrinth](https://modrinth.com/)'
+        help='Files to edit'
     )
 
     args = parser.parse_args()
 
+    if args.debug:
+        LOG.addHandler(logging.StreamHandler(sys.stdout))
+        LOG.setLevel(logging.DEBUG)
+        LOG.info('Debug Active')
+        LOG.info(str(args))
+
     if args.server is not None:
-        print(args)
+        print('NOT IMPLEMENTED!!!')
+        print('The args were: ', args)
         if hasattr(args, 'files'):
-            print()
+            print('The file list was: ', args.files)
     else:
         r4n(args)
 
